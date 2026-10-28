@@ -23,7 +23,15 @@ DETOUR_FRACTIONS = (0.12, 0.25)  # tried left and right of the direct line, near
 
 
 class RoutingError(Exception):
-    """A problem the user should see (bad address, no route, service down)."""
+    """A problem the user should see (bad address, no route, service down).
+
+    ``status`` is the HTTP status the API layer should answer with: 422 for problems with
+    the user's input, 502/503 when the upstream service failed or isn't configured.
+    """
+
+    def __init__(self, message: str, status: int = 422):
+        super().__init__(message)
+        self.status = status
 
 
 @dataclass(frozen=True)
@@ -92,7 +100,7 @@ class OrsClient:
         session: requests.Session | None = None,
     ):
         if not api_key:
-            raise RoutingError("Routing is not configured (ORS_API_KEY is missing).")
+            raise RoutingError("Routing is not configured (ORS_API_KEY is missing).", 503)
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = session or requests.Session()
@@ -113,7 +121,7 @@ class OrsClient:
         params = {"text": text, "size": size, "boundary.country": "US,CA"}
         response = self._send("GET", path, params=params)
         if not response.ok:
-            raise RoutingError(f"Geocoding failed: {_error_message(response)}")
+            raise RoutingError(f"Geocoding failed: {_error_message(response)}", 502)
         return parse_places(response.json())
 
     # --- directions -----------------------------------------------------------------
@@ -176,4 +184,4 @@ class OrsClient:
                 method, self.base_url + path, timeout=self.timeout, **kwargs
             )
         except requests.RequestException as exc:
-            raise RoutingError("Routing service is unreachable. Please try again.") from exc
+            raise RoutingError("Routing service is unreachable. Please try again.", 502) from exc

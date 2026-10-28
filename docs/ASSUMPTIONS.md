@@ -40,3 +40,18 @@ Wind is a continuous forecast value, so "25–34" is read as [25, 35); 34.6 mph 
 - Checkpoint ETA = departure + elapsed time, where elapsed time is interpolated from the
   routing API's per-step durations (so slow city streets and fast highways are respected).
 - Mile markers are scaled to the API's reported odometer distance.
+
+## Weather
+- Source: Open-Meteo hourly forecast (no key), requested in mph and inches, UTC, 7 days.
+- Rain rate = `rain + showers` for the hour (liquid only; snow is scored separately).
+  Open-Meteo hourly precipitation is the total over the preceding hour, so it is used
+  directly as in/hr. `snowfall` is in inches when `precipitation_unit=inch`.
+- Weather at a checkpoint is linearly interpolated between the two hourly values around
+  its ETA. If the ETA is outside the forecast, or either value is missing, the checkpoint
+  is "Forecast unavailable".
+- Checkpoints are snapped to a 0.1° grid (~7 mi) before fetching; nearby checkpoints
+  share a forecast. All routes' points go in one batched request (chunks of 100), and
+  each grid cell is cached for `WEATHER_CACHE_TTL_SECONDS` (default 10 minutes).
+- Departure must be between 1 hour ago and 5 days ahead, so the trip fits in the forecast.
+- Load weight is accepted from 0 to 150,000 lb.
+- If every route has a No Travel checkpoint, no route is recommended.

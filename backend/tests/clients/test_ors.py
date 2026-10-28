@@ -18,7 +18,7 @@ WACO = Place("Waco", 31.55, -97.15)
 def make_response(status=200, payload=None):
     response = requests.Response()
     response.status_code = status
-    response._content = json.dumps(payload or {}).encode()
+    response._content = json.dumps({} if payload is None else payload).encode()
     return response
 
 
