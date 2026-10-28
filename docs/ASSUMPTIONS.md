@@ -28,3 +28,15 @@ Wind is a continuous forecast value, so "25–34" is read as [25, 35); 34.6 mph 
   a ranking. Exact ties keep the routing API's order.
 - Checkpoints whose ETA is beyond the forecast horizon are "forecast unavailable": reported
   as unknown miles and excluded from the average, never silently treated as Low.
+
+## Routes and checkpoints
+- Routes use the OpenRouteService `driving-hgv` (heavy goods vehicle) profile.
+- The public ORS API only returns alternative routes for trips under ~100 km. For longer
+  trips we request the main route, then detours through points offset perpendicular from
+  the midpoint (12% then 25% of the trip length, left then right). Detours within 2% of an
+  existing route on both distance and duration are discarded as duplicates. If no distinct
+  detour exists, fewer than 3 routes are shown rather than fake ones.
+- Checkpoints are placed at mile 0, every N miles, and at the destination.
+- Checkpoint ETA = departure + elapsed time, where elapsed time is interpolated from the
+  routing API's per-step durations (so slow city streets and fast highways are respected).
+- Mile markers are scaled to the API's reported odometer distance.
