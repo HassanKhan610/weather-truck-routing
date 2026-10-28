@@ -154,3 +154,34 @@ def similar(a: RouteGeometry, b: RouteGeometry, tolerance: float = 0.02) -> bool
         return abs(x - y) <= tolerance * max(x, y, 1e-9)
 
     return close(a.distance_mi, b.distance_mi) and close(a.duration_s, b.duration_s)
+
+
+def simplify(points: Sequence[LatLon], tolerance_deg: float) -> list[LatLon]:
+    """Douglas-Peucker line simplification (planar, in degrees), keeping both endpoints.
+
+    Used only for the geometry sent to the map: checkpoints and ETAs are computed on the
+    full-resolution route. Iterative, so very long routes can't hit the recursion limit.
+    """
+    if len(points) < 3:
+        return list(points)
+    keep = [False] * len(points)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(points) - 1)]
+    while stack:
+        start, end = stack.pop()
+        (y1, x1), (y2, x2) = points[start], points[end]
+        dx, dy = x2 - x1, y2 - y1
+        length = math.hypot(dx, dy)
+        farthest, max_dist = -1, tolerance_deg
+        for i in range(start + 1, end):
+            y, x = points[i]
+            if length:
+                dist = abs(dy * (x - x1) - dx * (y - y1)) / length
+            else:
+                dist = math.hypot(x - x1, y - y1)
+            if dist > max_dist:
+                farthest, max_dist = i, dist
+        if farthest != -1:
+            keep[farthest] = True
+            stack += [(start, farthest), (farthest, end)]
+    return [p for p, kept in zip(points, keep) if kept]

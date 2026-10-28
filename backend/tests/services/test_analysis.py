@@ -133,3 +133,24 @@ def test_routing_errors_propagate():
 
     with pytest.raises(RoutingError):
         analyze_trip(trip(), Failing([]), FakeWeather())
+
+
+def test_full_pipeline_on_recorded_ors_response(load_fixture):
+    """Real api.heigit.org response (Dallas -> Fort Worth, 3 native alternatives)."""
+    from routing.clients.ors import parse_directions
+
+    routes = parse_directions(load_fixture("ors_directions_dallas_fort_worth.json"))
+    assert len(routes) == 3
+    result = analyze_trip(
+        trip(interval=10), FakeRouting(routes), FakeWeather(storm_lon=-97.0, hours=6)
+    )
+    for route in result["routes"]:
+        checkpoints = route["checkpoints"]
+        assert checkpoints[0]["position_mi"] == 0
+        assert checkpoints[-1]["position_mi"] == route["distance_mi"]
+        etas = [c["eta"] for c in checkpoints]
+        assert etas == sorted(etas)
+        assert route["arrival"] == etas[-1]
+    # the western half (toward Fort Worth) is stormy in the fake forecast
+    assert all(r["score"]["high_miles"] > 0 for r in result["routes"])
+    assert result["recommended_route_id"] is not None

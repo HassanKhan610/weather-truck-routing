@@ -10,6 +10,7 @@ from routing.domain.geometry import (
     generate_checkpoints,
     haversine_mi,
     similar,
+    simplify,
     vertex_profile,
 )
 
@@ -141,3 +142,31 @@ def test_last_vertex_lands_exactly_on_api_totals(seed):
     assert miles[-1] == distance
     assert seconds[-1] == duration
     assert generate_checkpoints(r, 10, DEPART)[-1].position_mi == distance
+
+
+# --- display simplification ------------------------------------------------------------
+
+
+def test_simplify_drops_collinear_points_and_keeps_corners():
+    line = [(0.0, x / 10) for x in range(11)] + [(1.0, 1.0)]
+    assert simplify(line, 0.001) == [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0)]
+
+
+def test_simplify_keeps_deviations_above_tolerance():
+    line = [(0, 0), (0.01, 0.5), (0, 1)]
+    assert simplify(line, 0.001) == line
+    assert simplify(line, 0.02) == [(0, 0), (0, 1)]
+
+
+def test_simplify_short_and_degenerate_inputs():
+    assert simplify([(1, 1)], 0.1) == [(1, 1)]
+    assert simplify([(1, 1), (1, 1), (1, 1)], 0.1) == [(1, 1), (1, 1)]
+
+
+def test_simplify_real_route_stays_within_tolerance(load_fixture):
+    from routing.clients.ors import parse_directions
+
+    route = parse_directions(load_fixture("ors_directions_dallas_fort_worth.json"))[0]
+    simple = simplify(route.coordinates, 0.0005)
+    assert len(simple) < len(route.coordinates) / 3
+    assert simple[0] == route.coordinates[0] and simple[-1] == route.coordinates[-1]

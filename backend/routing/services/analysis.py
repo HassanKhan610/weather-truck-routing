@@ -17,12 +17,16 @@ from routing.domain.geometry import (
     LatLon,
     RouteGeometry,
     generate_checkpoints,
+    simplify,
 )
 from routing.domain.risk import RiskLevel, assess
 from routing.domain.scoring import ScoredCheckpoint, explain, rank, score_route
 
 ROUTE_NAMES = ("Route A", "Route B", "Route C")
 COORD_DECIMALS = 5  # ~1 m; keeps the geometry payload small
+# ~50 m: invisible at the zooms a whole route is viewed at, and cuts a cross-country
+# polyline from thousands of points to a few hundred for faster drawing and transfer.
+DISPLAY_TOLERANCE_DEG = 0.0005
 
 
 class RoutingClient(Protocol):
@@ -100,12 +104,12 @@ def analyze_trip(trip: TripRequest, routing: RoutingClient, weather: WeatherClie
         known = [level for level in (s.level for s in scored) if level is not None]
         routes[name] = {
             "id": name,
-            "distance_mi": round(geometry.distance_mi, 1),
+            "distance_mi": round(geometry.distance_mi, 2),
             "duration_s": round(geometry.duration_s),
             "arrival": checkpoints[-1].eta.isoformat(),
             "geometry": [
                 [round(lat, COORD_DECIMALS), round(lon, COORD_DECIMALS)]
-                for lat, lon in geometry.coordinates
+                for lat, lon in simplify(geometry.coordinates, DISPLAY_TOLERANCE_DEG)
             ],
             "checkpoints": cp_payloads,
             "worst_level": int(max(known)) if known else None,
