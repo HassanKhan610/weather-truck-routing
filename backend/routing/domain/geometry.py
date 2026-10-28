@@ -85,7 +85,11 @@ def _cumulative(values: Sequence[float]) -> list[float]:
 
 
 def _rescale(values: list[float], total: float) -> list[float]:
-    return [v * total / values[-1] for v in values] if values[-1] > 0 else values
+    if values[-1] <= 0:
+        return values
+    scaled = [v * total / values[-1] for v in values]
+    scaled[-1] = total  # exact: float error must not push the destination past the route end
+    return scaled
 
 
 def checkpoint_positions(total_mi: float, interval_mi: float) -> list[float]:

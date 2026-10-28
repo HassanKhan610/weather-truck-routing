@@ -125,3 +125,19 @@ def test_similar_routes_detected_by_distance_and_duration():
     a = RouteGeometry(STRAIGHT, (), 100, 3600)
     assert similar(a, RouteGeometry(STRAIGHT, (), 101, 3650))
     assert not similar(a, RouteGeometry(STRAIGHT, (), 110, 3600))
+
+
+@pytest.mark.parametrize("seed", range(25))
+def test_last_vertex_lands_exactly_on_api_totals(seed):
+    # Regression: float rescaling once put the destination a hair past distance_mi,
+    # which scoring rejected as "outside the route".
+    import random
+
+    rng = random.Random(seed)
+    coords = tuple((32 + rng.random() * 7, -105 + rng.random() * 8) for _ in range(60))
+    distance, duration = rng.uniform(100, 1500), rng.uniform(3600, 90000)
+    r = RouteGeometry(coords, (Step(0, 59, duration),), distance, duration)
+    miles, seconds = vertex_profile(r)
+    assert miles[-1] == distance
+    assert seconds[-1] == duration
+    assert generate_checkpoints(r, 10, DEPART)[-1].position_mi == distance
