@@ -106,3 +106,20 @@ def test_upstream_failures_raise_weather_error(response, cache):
 def test_malformed_location_raises_weather_error():
     with pytest.raises(WeatherError):
         parse_forecast({"latitude": 1})
+
+
+def test_multiple_chunks_are_fetched_concurrently(load_fixture, cache, monkeypatch):
+    import threading
+
+    monkeypatch.setattr(open_meteo, "MAX_LOCATIONS_PER_REQUEST", 1)
+    loc = location(load_fixture)
+    barrier = threading.Barrier(3, timeout=2)  # only passes if 3 requests are in flight
+
+    class ConcurrentSession(FakeSession):
+        def get(self, url, params=None, timeout=None):
+            barrier.wait()
+            return make_response(200, [loc])
+
+    client = OpenMeteoClient(cache, session=ConcurrentSession())
+    result = client.forecasts([(30, -90), (31, -90), (32, -90)])
+    assert len(result) == 3

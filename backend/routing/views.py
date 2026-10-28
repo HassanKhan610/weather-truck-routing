@@ -11,8 +11,9 @@ from rest_framework.response import Response
 
 from routing.clients.open_meteo import OpenMeteoClient, WeatherError
 from routing.clients.ors import OrsClient, RoutingError
-from routing.serializers import AnalyzeRequestSerializer
+from routing.serializers import AnalyzeRequestSerializer, HeatmapRequestSerializer
 from routing.services.analysis import analyze_trip
+from routing.services.heatmap import build_heatmap
 
 MIN_AUTOCOMPLETE_CHARS = 3
 
@@ -63,5 +64,22 @@ def analyze(request: Request) -> Response:
     try:
         result = analyze_trip(serializer.to_trip(), routing_client(), weather_client())
     except (RoutingError, WeatherError) as exc:
+        return _error(exc)
+    return Response(result)
+
+
+@api_view(["POST"])
+def heatmap(request: Request) -> Response:
+    """Risk frames for hours 0-48 over the corridor around the given route paths.
+
+    POST rather than GET because the route paths are too large for a query string.
+    """
+    serializer = HeatmapRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    data = serializer.validated_data
+    try:
+        result = build_heatmap(data["paths"], data["start"], data["load_lb"], weather_client())
+    except WeatherError as exc:
         return _error(exc)
     return Response(result)

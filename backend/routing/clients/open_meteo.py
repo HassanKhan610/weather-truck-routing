@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any, Protocol
 
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 GRID_DEGREES = 0.1
 MAX_LOCATIONS_PER_REQUEST = 100  # keeps the query string comfortably short
+MAX_PARALLEL_REQUESTS = 4
 FORECAST_DAYS = 7
 HOURLY_VARIABLES = "wind_speed_10m,rain,showers,snowfall"
 
@@ -98,9 +100,17 @@ class OpenMeteoClient:
         by_cell = {p: cached[cache_key(p)] for p in snapped if cache_key(p) in cached}
 
         missing = [p for p in snapped if p not in by_cell]
-        for start in range(0, len(missing), MAX_LOCATIONS_PER_REQUEST):
-            chunk = missing[start : start + MAX_LOCATIONS_PER_REQUEST]
-            fetched = dict(zip(chunk, self._fetch(chunk)))
+        chunks = [
+            missing[i : i + MAX_LOCATIONS_PER_REQUEST]
+            for i in range(0, len(missing), MAX_LOCATIONS_PER_REQUEST)
+        ]
+        if len(chunks) > 1:  # large heatmap grids: fetch chunks concurrently
+            with ThreadPoolExecutor(min(len(chunks), MAX_PARALLEL_REQUESTS)) as pool:
+                results = list(pool.map(self._fetch, chunks))
+        else:
+            results = [self._fetch(chunk) for chunk in chunks]
+        for chunk, forecasts in zip(chunks, results):
+            fetched = dict(zip(chunk, forecasts))
             self.cache.set_many({cache_key(p): f for p, f in fetched.items()}, self.ttl)
             by_cell.update(fetched)
         return {p: by_cell[snap(p)] for p in points}

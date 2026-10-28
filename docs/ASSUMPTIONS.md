@@ -55,3 +55,18 @@ Wind is a continuous forecast value, so "25–34" is read as [25, 35); 34.6 mph 
 - Departure must be between 1 hour ago and 5 days ahead, so the trip fits in the forecast.
 - Load weight is accepted from 0 to 150,000 lb.
 - If every route has a No Travel checkpoint, no route is recommended.
+
+## Heatmap
+- `POST /api/heatmap` (not GET): the client sends the route paths, which are too long
+  for a query string. Body: `{paths: [[[lat, lon], ...], ...], start, load_lb}`.
+- The corridor is every grid cell within 0.5° (~35 mi) of any route, with the east-west
+  reach widened by latitude. The grid step (0.1° to 1°) is the finest that keeps the
+  corridor at or under 250 cells. Open-Meteo counts each location as one API call, so
+  this bounds usage per heatmap regardless of trip length.
+- Values are a continuous risk index from 0 to 4: the cell's risk level plus how far it
+  is through that level's band (e.g. 30 mph wind = 1.5). `floor(index)` always equals the
+  checkpoint risk level for the same weather and load (tested over thousands of
+  combinations), so heatmap shading and checkpoint colours never disagree.
+- Frame 0 is the departure hour (rounded down); frames run hourly to +48 h. Hours past the
+  forecast are `null`.
+- Payload is columnar: cell lat/lon arrays once, then one value array per hour, gzipped.

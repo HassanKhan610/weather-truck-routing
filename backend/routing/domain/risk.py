@@ -128,3 +128,27 @@ def assess(weather: Weather, load_lb: float) -> Assessment:
         return Assessment(level, ())
     reasons = tuple(dict.fromkeys(reason for lvl, reason in candidates if lvl == level))
     return Assessment(level, reasons)
+
+
+def _band_position(value: float, boundaries: tuple[Boundary, ...]) -> float:
+    """Level of the band ``value`` is in, plus how far through that band it is (0..1)."""
+    edges = [0.0] + [b.value for b in boundaries]
+    if value >= edges[-1]:
+        return float(RiskLevel.NO_TRAVEL)
+    for level, (low, high) in enumerate(zip(edges, edges[1:])):
+        if value < high:
+            return level + max(0.0, value - low) / (high - low)
+    return float(RiskLevel.NO_TRAVEL)  # unreachable; keeps type checkers happy
+
+
+def risk_index(weather: Weather, load_lb: float) -> float:
+    """Continuous 0-4 risk used to shade the heatmap.
+
+    ``floor(risk_index(w, load)) == assess(w, load).level`` always holds, so the heatmap
+    can never disagree with the checkpoint colours; the fraction only adds smooth shading.
+    """
+    level = assess(weather, load_lb).level
+    position = max(_band_position(getattr(weather, f), b) for f, b in THRESHOLDS.items())
+    if level == RiskLevel.NO_TRAVEL:
+        return float(RiskLevel.NO_TRAVEL)
+    return min(max(position, float(level)), level + 0.99)

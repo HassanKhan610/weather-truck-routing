@@ -43,20 +43,21 @@ class PlaceField(serializers.Field):
         return value
 
 
+def validate_departure_window(value):
+    now = timezone.now()
+    if value < now - DEPARTURE_GRACE:
+        raise serializers.ValidationError("Departure can't be in the past.")
+    if value > now + MAX_DEPARTURE_AHEAD:
+        raise serializers.ValidationError("Departure must be within the next 5 days.")
+    return value
+
+
 class AnalyzeRequestSerializer(serializers.Serializer):
     origin = PlaceField()
     destination = PlaceField()
-    departure = serializers.DateTimeField()
+    departure = serializers.DateTimeField(validators=[validate_departure_window])
     load_lb = serializers.FloatField(min_value=0, max_value=MAX_LOAD_LB)
     interval_mi = serializers.ChoiceField(choices=INTERVAL_CHOICES)
-
-    def validate_departure(self, value):
-        now = timezone.now()
-        if value < now - DEPARTURE_GRACE:
-            raise serializers.ValidationError("Departure can't be in the past.")
-        if value > now + MAX_DEPARTURE_AHEAD:
-            raise serializers.ValidationError("Departure must be within the next 5 days.")
-        return value
 
     def to_trip(self) -> TripRequest:
         data = self.validated_data
@@ -67,3 +68,29 @@ class AnalyzeRequestSerializer(serializers.Serializer):
             load_lb=data["load_lb"],
             interval_mi=data["interval_mi"],
         )
+
+
+MAX_PATHS = 3
+MAX_POINTS_PER_PATH = 5_000
+
+
+class LatLonField(serializers.ListField):
+    child = serializers.FloatField()
+
+    def to_internal_value(self, data):
+        values = super().to_internal_value(data)
+        if len(values) != 2 or not (-90 <= values[0] <= 90 and -180 <= values[1] <= 180):
+            raise serializers.ValidationError("Each point must be [lat, lon] within range.")
+        return (values[0], values[1])
+
+
+class HeatmapRequestSerializer(serializers.Serializer):
+    paths = serializers.ListField(
+        child=serializers.ListField(
+            child=LatLonField(), min_length=1, max_length=MAX_POINTS_PER_PATH
+        ),
+        min_length=1,
+        max_length=MAX_PATHS,
+    )
+    start = serializers.DateTimeField(validators=[validate_departure_window])
+    load_lb = serializers.FloatField(min_value=0, max_value=MAX_LOAD_LB)
