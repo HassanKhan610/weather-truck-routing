@@ -21,6 +21,13 @@ logger = logging.getLogger(__name__)
 ORS_LIMIT_EXCEEDED = 2004
 DETOUR_FRACTIONS = (0.12, 0.25)  # tried left and right of the direct line, nearest first
 
+# HeiGIT moved the public API from api.openrouteservice.org (shut down Nov 2026) to
+# api.heigit.org, with each service under its own prefix. Existing keys work on both.
+DEFAULT_BASE_URL = "https://api.heigit.org"
+GEOCODE_SEARCH_PATH = "/pelias/v1/search"
+GEOCODE_AUTOCOMPLETE_PATH = "/pelias/v1/autocomplete"
+DIRECTIONS_PATH = "/openrouteservice/v2/directions/driving-hgv/geojson"
+
 
 class RoutingError(Exception):
     """A problem the user should see (bad address, no route, service down).
@@ -95,7 +102,7 @@ class OrsClient:
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.openrouteservice.org",
+        base_url: str = DEFAULT_BASE_URL,
         timeout: float = 15,
         session: requests.Session | None = None,
     ):
@@ -109,13 +116,13 @@ class OrsClient:
     # --- geocoding ------------------------------------------------------------------
 
     def geocode(self, text: str) -> Place:
-        places = self._search("/geocode/search", text, size=1)
+        places = self._search(GEOCODE_SEARCH_PATH, text, size=1)
         if not places:
             raise RoutingError(f"Couldn't find a location for '{text}'.")
         return places[0]
 
     def autocomplete(self, text: str, size: int = 5) -> list[Place]:
-        return self._search("/geocode/autocomplete", text, size=size)
+        return self._search(GEOCODE_AUTOCOMPLETE_PATH, text, size=size)
 
     def _search(self, path: str, text: str, size: int) -> list[Place]:
         params = {"text": text, "size": size, "boundary.country": "US,CA"}
@@ -166,7 +173,7 @@ class OrsClient:
                 "weight_factor": 1.6,
                 "share_factor": 0.6,
             }
-        response = self._send("POST", "/v2/directions/driving-hgv/geojson", json=body)
+        response = self._send("POST", DIRECTIONS_PATH, json=body)
         if response.ok:
             return parse_directions(response.json())
 

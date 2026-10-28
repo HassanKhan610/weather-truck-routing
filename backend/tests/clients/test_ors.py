@@ -105,7 +105,7 @@ def test_geocode_returns_best_match(load_fixture):
     ors, session = client(make_response(200, load_fixture("ors_geocode.json")))
     assert ors.geocode("Dallas").label == "Dallas, TX, USA"
     method, url, kwargs = session.calls[0]
-    assert url.endswith("/geocode/search") and kwargs["params"]["size"] == 1
+    assert url == "https://api.heigit.org/pelias/v1/search" and kwargs["params"]["size"] == 1
 
 
 def test_geocode_with_no_match_raises():
@@ -125,7 +125,9 @@ def test_native_alternatives_used_when_available(load_fixture):
     body = session.calls[0][2]["json"]
     assert body["alternative_routes"]["target_count"] == 2
     assert body["coordinates"][0] == [-96.80, 32.78]  # ORS wants lon,lat
-    assert session.calls[0][1].endswith("/driving-hgv/geojson")
+    assert session.calls[0][1] == (
+        "https://api.heigit.org/openrouteservice/v2/directions/driving-hgv/geojson"
+    )
 
 
 def test_long_trip_falls_back_to_detours_and_skips_duplicates(load_fixture):

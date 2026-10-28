@@ -93,7 +93,7 @@ Errors: `400` invalid input (per-field messages), `422` e.g. address not found,
 ## Run locally
 
 Requirements: Python 3.9+ (3.12 recommended), Node 20+, a free
-[OpenRouteService key](https://openrouteservice.org/dev/#/signup). Open-Meteo needs no key.
+[OpenRouteService key](https://account.heigit.org/signup) (OpenRouteService is run by HeiGIT; the API lives at `api.heigit.org`). Open-Meteo needs no key.
 
 ```bash
 # Backend

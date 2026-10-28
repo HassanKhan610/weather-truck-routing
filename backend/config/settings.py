@@ -78,7 +78,7 @@ USE_TZ = True
 
 # Third-party API configuration (read by the routing app's clients).
 ORS_API_KEY = os.getenv("ORS_API_KEY", "")
-ORS_BASE_URL = os.getenv("ORS_BASE_URL", "https://api.openrouteservice.org")
+ORS_BASE_URL = os.getenv("ORS_BASE_URL", "https://api.heigit.org")
 OPEN_METEO_BASE_URL = os.getenv("OPEN_METEO_BASE_URL", "https://api.open-meteo.com")
 WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "600"))
 HTTP_TIMEOUT_SECONDS = float(os.getenv("HTTP_TIMEOUT_SECONDS", "15"))
