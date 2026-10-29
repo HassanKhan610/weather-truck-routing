@@ -1,3 +1,19 @@
+[project]
+name = "weather-truck-routing-api"
+version = "1.0.0"
+requires-python = ">=3.9"
+# Vercel installs from here; requirements.txt mirrors it for pip-based hosts and CI
+# (tests/test_dependencies.py keeps the two in sync).
+dependencies = [
+    "Django==4.2.30",
+    "djangorestframework==3.16.1",
+    "django-cors-headers==4.9.0",
+    "requests==2.32.5",
+    "python-dotenv==1.2.1",
+    "gunicorn==23.0.0",
+    "whitenoise==6.11.0",
+]
+
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["tests"]

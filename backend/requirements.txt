@@ -1,3 +1,4 @@
+# Keep in sync with [project].dependencies in pyproject.toml.
 Django==4.2.30
 djangorestframework==3.16.1
 django-cors-headers==4.9.0
