@@ -4,8 +4,8 @@ Helps a truck driver choose the safest route: compares up to three routes by for
 weather **at the time the truck actually reaches each point**, the load weight, and
 travel time, then recommends one and explains why.
 
-- **Live app:** _TODO: Vercel URL_
-- **API:** _TODO: Render URL_ (`/api/health/`)
+- **Live app:** https://weather-truck-routing-wewt.vercel.app
+- **API:** https://weather-truck-routing-gules.vercel.app/api/health/
 - **Walkthrough:** _TODO: Loom URL_
 
 ![CI](https://github.com/HassanKhan610/weather-truck-routing/actions/workflows/ci.yml/badge.svg)

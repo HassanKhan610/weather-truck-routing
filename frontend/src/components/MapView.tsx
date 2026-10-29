@@ -1,7 +1,10 @@
 import { COORDINATE_SYSTEM, type PickingInfo } from "@deck.gl/core";
 import { BitmapLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { Map as MapLibreMap, NavigationControl } from "maplibre-gl";
+import { Map as MapLibreMap, NavigationControl, setWorkerUrl } from "maplibre-gl";
+// MapLibre 6 finds its worker next to its own module, which no longer exists once bundled.
+// Let Vite build the worker as a real worker chunk and hand MapLibre its URL.
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -16,6 +19,8 @@ import {
   riskLabel,
   type RGB,
 } from "../lib/risk";
+
+setWorkerUrl(maplibreWorkerUrl);
 
 const STYLE_URL =
   import.meta.env.VITE_MAP_STYLE_URL ??

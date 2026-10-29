@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
+  worker: { format: "es" }, // MapLibre's worker is an ES module
   // MapLibre 6 locates its web worker relative to its own module URL; pre-bundling breaks that.
   optimizeDeps: { exclude: ["maplibre-gl"] },
   build: {
