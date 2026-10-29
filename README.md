@@ -8,7 +8,7 @@ travel time, then recommends one and explains why.
 - **API:** _TODO: Render URL_ (`/api/health/`)
 - **Walkthrough:** _TODO: Loom URL_
 
-![CI](https://github.com/OWNER/weather-truck-routing/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/HassanKhan610/weather-truck-routing/actions/workflows/ci.yml/badge.svg)
 
 ## What it does
 
