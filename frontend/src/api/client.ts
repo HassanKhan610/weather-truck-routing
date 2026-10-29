@@ -1,6 +1,13 @@
 import type { Analysis, Heatmap, LatLon, Place, TripInput } from "./types";
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
+/** Accepts "api.example.com" as well as full URLs; a missing scheme would make fetch relative. */
+export function normalizeBaseUrl(raw: string | undefined): string {
+  const value = (raw ?? "").trim() || "http://localhost:8000";
+  const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  return withScheme.replace(/\/+$/, "");
+}
+
+const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 // Heatmap only needs the corridor shape; thinning keeps the request body small.
 export const MAX_HEATMAP_POINTS_PER_PATH = 1500;

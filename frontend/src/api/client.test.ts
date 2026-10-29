@@ -1,4 +1,4 @@
-import { api, ApiError, errorMessage, thinPath } from "./client";
+import { api, ApiError, errorMessage, normalizeBaseUrl, thinPath } from "./client";
 import type { LatLon } from "./types";
 
 describe("errorMessage", () => {
@@ -54,5 +54,17 @@ describe("api", () => {
     const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
     expect(body.paths[0].length).toBeLessThanOrEqual(1501);
     expect(body.load_lb).toBe(1000);
+  });
+});
+
+describe("normalizeBaseUrl", () => {
+  it.each([
+    [undefined, "http://localhost:8000"],
+    ["", "http://localhost:8000"],
+    ["api.example.vercel.app", "https://api.example.vercel.app"],
+    ["https://api.example.vercel.app/", "https://api.example.vercel.app"],
+    [" http://localhost:8000 ", "http://localhost:8000"],
+  ])("%s -> %s", (raw, expected) => {
+    expect(normalizeBaseUrl(raw)).toBe(expected);
   });
 });
