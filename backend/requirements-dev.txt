@@ -1,5 +1,6 @@
 -r requirements.txt
-pytest
-pytest-django
-ruff
-black
+# Pinned so CI formats and lints exactly like local development.
+pytest==8.4.2
+pytest-django==4.11.1
+ruff==0.17.3
+black==25.11.0
