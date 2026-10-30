@@ -6,7 +6,7 @@ travel time, then recommends one and explains why.
 
 - **Live app:** https://weather-truck-routing-wewt.vercel.app
 - **API:** https://weather-truck-routing-gules.vercel.app/api/health/
-- **Walkthrough:** _TODO: Loom URL_
+- **Walkthrough (Loom):** https://www.loom.com/share/17ccbbcb6dcd46989eac5cf63f8aedd8
 
 ![CI](https://github.com/HassanKhan610/weather-truck-routing/actions/workflows/ci.yml/badge.svg)
 
